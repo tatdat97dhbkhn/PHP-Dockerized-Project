@@ -6,7 +6,14 @@ services:
       - '8000:80'
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-#  php:
+  php:
+    build:
+      context: ./dockerfiles
+      dockerfile: php.dockerfile
+    volumes:
+      # Sử dụng tuỳ chọn delegated bởi vì tôi không muốn khi có thay đổi code trong container thì sẽ phản ánh ngay ra
+      # host machine, thay vào đó nó sẽ được xử lý theo batch. Hiệu suất tốt hơn 1 chút.
+      - ./src/var/www/html:delegated
 #  mysql:
 #  composer:
 #  artisan:
