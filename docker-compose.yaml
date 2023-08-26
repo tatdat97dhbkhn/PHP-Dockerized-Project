@@ -1,28 +1,47 @@
 version: '3.8'
+
 services:
   server:
-    image: nginx:stable-alpine
+    # image: 'nginx:stable-alpine'
+    build:
+      context: .
+      dockerfile: dockerfiles/nginx.dockerfile
     ports:
       - '8000:80'
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+#    volumes:
+#      - ./src:/var/www/html
+#      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - php
+      - mysql
   php:
     build:
-      context: ./dockerfiles
-      dockerfile: php.dockerfile
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
     volumes:
       # Sử dụng tuỳ chọn delegated bởi vì tôi không muốn khi có thay đổi code trong container thì sẽ phản ánh ngay ra
       # host machine, thay vào đó nó sẽ được xử lý theo batch. Hiệu suất tốt hơn 1 chút.
-      - ./src/var/www/html:delegated
+      - ./src:/var/www/html:delegated
   mysql:
     image: mysql:5.7
     env_file:
-      - ./env/mysql.env
+      - env/mysql.env
   composer:
     build:
-      context: ./dockerfiles
-      dockerfile: composer.dockerfile
+      context: dockerfiles
+      dockerfile: dockerfiles/composer.dockerfile
     volumes:
       - ./src:/var/www/html
-#  artisan:
-#  npm:
+  artisan:
+    build:
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
+    volumes:
+      - ./src:/var/www/html
+    entrypoint: ['php', '/var/www/html/artisan']
+  npm:
+    image: node:14
+    working_dir: /var/www/html
+    entrypoint: ['npm']
+    volumes:
+      - ./src:/var/www/html
